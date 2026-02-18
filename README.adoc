@@ -81,7 +81,9 @@ Environment variables (prefixed with `MCP_SX_`):
 | `info`
 |===
 
-== Connecting to LM Studio
+== Connecting to LM Studio 
+
+tested with https://lmstudio.ai[LMStudio] version 0.4.2
 
 To integrate the bridge with LM Studio, you need to manually edit the `mcp.json` configuration file:
 
@@ -92,7 +94,7 @@ To integrate the bridge with LM Studio, you need to manually edit the `mcp.json`
 *** Linux: `~/.config/lmstudio/mcp.json` (not tested)
 * Edit the `mcp.json` file:
 ** Open the file in a text editor.
-** Add the following entry to the `"servers"` array:
+** Add the following entry to the `"mcpServers"` array:
 [source,json]
 ----
 {
