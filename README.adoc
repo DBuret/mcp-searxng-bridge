@@ -13,7 +13,7 @@ An implementation of the **Model Context Protocol (MCP)** that allows AI agents 
 
 Unlike standard MCP servers using `stdio`, this bridge operates over **SSE (Server-Sent Events)**, enabling remote deployments on NAS, Docker, or specialized servers.
 
-NOTE:This project is a **gateway only** and does **not** include https://docs.searxng.org/[SearXNG]. You must deploy and configure your own https://docs.searxng.org/[SearXNG] instance separately.
+NOTE: This project is a **gateway only** and does **not** include https://docs.searxng.org/[SearXNG]. You must deploy and configure your own https://docs.searxng.org/[SearXNG] instance separately.
 
 toc::[]
 
