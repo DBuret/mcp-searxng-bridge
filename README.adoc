@@ -1,6 +1,6 @@
 = MCP SearXNG Rust Bridge
-v0.2.0
-:description: A high-performance, network-ready MCP server bridge for SearXNG.
+v0.3.0
+:description: A high-performance, network-ready MCP server bridge for SearXNG with web scraping capabilities.
 :icons: font
 :toc: macro
 :toc-title: Table of Contents
@@ -13,9 +13,9 @@ image:https://img.shields.io/badge/License-MIT-blue.svg[License]
 [cols="2,10",frame=none]
 |===
 |image:logo-128.png[logo] 
-|An implementation of the **Model Context Protocol (MCP)** that allows AI agents to perform web searches using a **SearXNG** instance. Built with Rust for speed and reliability.
+|An implementation of the **Model Context Protocol (MCP)** that allows AI agents to perform web searches and extract web content. Built with Rust for speed and reliability.
 
-Unlike standard MCP servers using `stdio`, this bridge operates over **SSE (Server-Sent Events)**, enabling remote deployments on NAS, Docker, or specialized servers.
+Unlike standard MCP servers using `stdio`, this bridge operates over **SSE (Server-Sent Events)** with a **Hybrid Response** mode, making it compatible with cloud deployments and local clients like LM Studio.
 |===
 
 toc::[]
@@ -24,40 +24,50 @@ NOTE: This project is a **gateway only** and does **not** include https://docs.s
 
 == Features
 
+* **Dual Tools**: 
+** `search`: High-speed web search via SearXNG.
+** `fetch_page`: Smart content extraction (HTML to Markdown) with boilerplate removal.
 * **Network-Ready**: Connect via SSE/HTTP; no local child-process management required.
-* **Modern Rust**: Leveraging Edition 2024 features and the Axum/Tokio ecosystem.
-* **Docker Optimized**: Multi-stage builds for a tiny footprint (~30MB).
-* **Transparent**: Syslog-compliant logs with backend performance tracking.
+* **LM Studio Optimized**: Specialized "Hybrid Handshake" to prevent connection timeouts.
+* **Modern Rust**: Leveraging Edition 2024 and the Axum/Tokio ecosystem.
+* **Docker Optimized**: Multi-stage builds for a tiny footprint (~35MB).
+
+== Tools
+
+The bridge exposes two primary tools to the AI:
+
+[cols="1,3"]
+|===
+| Tool | Description
+
+| `search`
+| Performs a query on SearXNG and returns titles, snippets, and URLs.
+
+| `fetch_page`
+| Downloads a specific URL, extracts the main content (article/body), and converts it to clean Markdown.
+|===
 
 == Deployment Options
 
 === 1. Using the DockerHub Image (Fastest)
-The easiest way to run the bridge is using the official pre-built image.
-
 [source,bash]
 ----
 docker run -d \
   --name mcp-searxng-bridge \
   -p 3000:3000 \
   -e MCP_SX_URL="http://your-searxng-ip:18080" \
-  davidburet/mcp-searxng-bridge:0.2.0
+  davidburet/mcp-searxng-bridge:0.3.0
 ----
 
 === 2. Building with Docker (Local)
-If you want to build your own container from source:
-
 [source,bash]
 ----
-# Build the image
 docker build -t mcp-searxng-bridge .
-
-# Run the local container
 docker run -d -p 3000:3000 -e MCP_SX_URL="http://172.17.0.1:18080" mcp-searxng-bridge
 ----
 
 === 3. Native Binary Build
-Requires Rust 1.85+ (for Edition 2024 support).
-
+Requires Rust 1.85+ (Edition 2024).
 [source,bash]
 ----
 cargo build --release
@@ -88,36 +98,34 @@ Environment variables (prefixed with `MCP_SX_`):
 
 == Connecting to LM Studio 
 
-tested with https://lmstudio.ai[LMStudio] version 0.4.2
+Tested with https://lmstudio.ai[LMStudio] version 0.4.2+.
 
-To integrate the bridge with LM Studio, you need to manually edit the `mcp.json` configuration file:
+To integrate the bridge, edit your `mcp.json` configuration file:
 
-* Locate the `mcp.json` file
-**  Navigate to LM Studio's configuration directory:
-*** Windows: `%APPDATA%\LM Studio\mcp.json` (working fine with mistralai_ministral-3-14b-reasoning-2512)
-*** macOS: `~/Library/Application Support/LM Studio/mcp.json` (not tested)
-*** Linux: `~/.config/lmstudio/mcp.json` (not tested)
-* Edit the `mcp.json` file:
-** Open the file in a text editor.
-** Add the following entry to the `"mcpServers"` array:
+* **Location**:
+** Windows: `%APPDATA%\LM Studio\mcp.json`
+** macOS: `~/Library/Application Support/LM Studio/mcp.json`
+** Linux: `~/.config/lmstudio/mcp.json`
+
+* **Configuration**:
 [source,json]
 ----
 {
   "mcpServers": {
-    "searxng-search": {
-      "url": "http://mcp-searxng-bridge:3000/sse"
+    "searxng-suite": {
+      "url": "http://YOUR_BRIDGE_IP:3000/sse"
     }
   }
 }
 ----
 
-Replace `http://mcp-searxng-bridge:3000/sse` with the actual URL of your mcp-searxng-bridge instance.
+TIP: This bridge uses a **Hybrid Initialize** response. It returns the handshake directly via HTTP POST to avoid the 60s timeout often encountered with LM Studio's SSE implementation._
 
 == Known Limitations
 
-* **Broadcast Channel**: Uses a global broadcast channel; every connected SSE client currently receives all search results (best for single-user local setups).
-* **Security**: No built-in authentication. Use within a trusted network or behind a VPN/Reverse Proxy.
-* **Protocol**: Currently supports `initialize`, `tools/list`, and `tools/call`.
+* **Broadcast Channel**: Currently, responses are broadcasted to all active SSE subscribers. Ideal for private/single-user use.
+* **Security**: No built-in Auth. Keep it behind a VPN or trusted network.
+* **Scraping**: `fetch_page` does not execute JavaScript (uses a static HTML scraper).
 
 == License
 
