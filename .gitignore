@@ -1,0 +1,25 @@
+# --- Rust/Cargo ---
+# The target directory contains all compiled artifacts (can be several GBs)
+/target/
+
+# --- Environment Configuration ---
+# Never commit your local configuration or secrets
+.env
+.env.local
+.env.*.local
+
+# --- IDEs and Editors ---
+# VS Code
+.vscode/
+# IntelliJ / JetBrains
+.idea/
+*.iml
+# Vim swap files
+*.swp
+# macOS specific
+.DS_Store
+
+# --- Cargo.lock ---
+# Note: For binary applications (servers/CLI tools), we DO NOT ignore Cargo.lock.
+# Keeping it ensures reproducible builds for everyone who clones your repo.
+# If this were a library (crate), we would usually ignore it.

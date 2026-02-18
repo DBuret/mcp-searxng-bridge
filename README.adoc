@@ -1,0 +1,145 @@
+= MCP SearXNG Rust Bridge
+David <your-email@example.com>
+v0.2.0
+:description: A high-performance MCP server bridge for SearXNG written in Rust.
+:library: Asciidoctor
+:icons: font
+:toc: macro
+:toc-title: Table of Contents
+
+image:https://img.shields.io/badge/Rust-2024-orange.svg[Rust Version]
+image:https://img.shields.io/badge/License-MIT-blue.svg[License]
+
+
+
+An implementation of the **Model Context Protocol (MCP)** that allows AI agents (like Claude Desktop) to perform web searches using a **SearXNG** instance. Built with Axum and Tokio for high concurrency.
+
+toc::[]
+
+== Features
+
+* *Pure Rust*: No system dependencies required (uses `rustls`).
+* *Asynchronous*: Built on top of `Tokio` and `Axum`.
+* *Modular Architecture*: Easy to extend with new tools.
+* *Structured Logging*: Syslog-compliant access logs with backend latency tracking.
+* *SSE Streaming*: Full support for Server-Sent Events as per MCP specification.
+
+== Architecture
+
+The bridge acts as a middleman between the MCP Client and the SearXNG search engine:
+
+
+
+== Installation
+
+=== Prerequisites
+
+* Rust (latest stable)
+* A running SearXNG instance
+
+=== Build
+
+[source,bash]
+----
+cargo build --release
+----
+
+The binary will be available at `target/release/mcp-searxng-rs`.
+
+== Configuration
+
+Configure the bridge using environment variables (prefix `MCP_SX_`):
+
+[cols="1,2,1"]
+|===
+| Variable | Description | Default
+
+| `MCP_SX_URL`
+| URL of your SearXNG instance
+| `http://172.17.0.1:18080`
+
+| `MCP_SX_PORT`
+| Port the bridge will listen on
+| `3000`
+
+| `MCP_SX_LOG`
+| Log level (debug, info, warn, error)
+| `info`
+|===
+
+== Usage
+
+=== Running the server
+
+[source,bash]
+----
+export MCP_SX_URL="http://your-searxng-ip:8080"
+export MCP_SX_LOG="debug"
+./mcp-searxng-rs
+----
+
+=== Connecting to Claude Desktop
+
+Add this to your `claude_desktop_config.json`:
+
+[source,json]
+----
+{
+  "mcpServers": {
+    "searxng": {
+      "command": "/path/to/mcp-searxng-rs",
+      "env": {
+        "MCP_SX_URL": "http://your-searxng-ip:8080"
+      }
+    }
+  }
+}
+----
+
+== Quick Start Example
+
+=== Clone and Build
+[source,bash]
+----
+git clone https://github.com/your-username/mcp-searxng-rs
+cd mcp-searxng-rs
+cargo build --release
+----
+
+=== Environment Setup
+Create a `.env` file or export the variables directly:
+[source,bash]
+----
+# Example for a local SearXNG running via Docker
+export MCP_SX_URL="http://localhost:8080"
+export MCP_SX_PORT="3000"
+export MCP_SX_LOG="info"
+----
+
+=== Run
+[source,bash]
+----
+./target/release/mcp-searxng-rs
+----
+
+== Development
+
+This project is modular:
+
+* `src/mcp.rs`: MCP Protocol definitions.
+* `src/handlers/`: Tool implementations (add your custom tools here).
+* `src/state.rs`: Shared application state and config.
+
+== Known Limitations
+
+While functional, this bridge currently has the following limitations:
+
+* *Broadcast Overkill*: The server uses a global broadcast channel. In a multi-user environment, every connected SSE client receives the search results of every other client.
+* *Stateless Search*: Each search is independent; there is no memory of previous searches within the bridge itself (context is handled by the MCP Client).
+* *Single Tool*: Only the `search` tool is implemented. Advanced web navigation (following links, rendering JavaScript) is not yet supported.
+* *No Auth*: The bridge does not implement authentication layers. It should be used within a trusted network or behind a VPN/Reverse Proxy.
+* *Partial Protocol*: Only `initialize`, `tools/list`, and `tools/call` methods are handled. Progress notifications and resource management are not yet implemented.
+
+== License
+
+MIT License - see link:LICENSE[LICENSE] for details.
