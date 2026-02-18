@@ -81,23 +81,30 @@ Environment variables (prefixed with `MCP_SX_`):
 | `info`
 |===
 
-== Connecting to Claude Desktop
+== Connecting to LM Studio
 
-Configure your `claude_desktop_config.json` to point to your bridge. Even if the bridge is remote, Claude Desktop uses the local command to initiate the network connection:
+To integrate the bridge with LM Studio, you need to manually edit the `mcp.json` configuration file:
 
+* Locate the `mcp.json` file
+**  Navigate to LM Studio's configuration directory:
+*** Windows: `%APPDATA%\LM Studio\mcp.json` (working fine with mistralai_ministral-3-14b-reasoning-2512)
+*** macOS: `~/Library/Application Support/LM Studio/mcp.json` (not tested)
+*** Linux: `~/.config/lmstudio/mcp.json` (not tested)
+* Edit the `mcp.json` file:
+** Open the file in a text editor.
+** Add the following entry to the `"servers"` array:
 [source,json]
 ----
 {
   "mcpServers": {
-    "searxng-network": {
-      "command": "mcp-searxng-rs",
-      "env": {
-        "MCP_SX_URL": "http://your-remote-searxng:18080"
-      }
+    "searxng-search": {
+      "url": "http://mcp-searxng-bridge:3000/sse"
     }
   }
 }
 ----
+
+Replace `http://mcp-searxng-bridge:3000/sse` with the actual URL of your mcp-searxng-bridge instance.
 
 == Known Limitations
 
