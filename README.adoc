@@ -1,5 +1,4 @@
 = MCP SearXNG Rust Bridge
-David <your-email@example.com>
 v0.2.0
 :description: A high-performance, network-ready MCP server bridge for SearXNG.
 :icons: font
@@ -7,46 +6,61 @@ v0.2.0
 :toc-title: Table of Contents
 
 image:https://img.shields.io/badge/Rust-2024-orange.svg[Rust Version]
+image:https://img.shields.io/badge/Docker-davidburet-blue.svg[Docker Hub]
 image:https://img.shields.io/badge/License-MIT-blue.svg[License]
-image:https://img.shields.io/badge/Protocol-MCP-green.svg[MCP]
 
-An implementation of the **Model Context Protocol (MCP)** that allows AI agents (like Claude Desktop) to perform web searches using a **SearXNG** instance. 
+An implementation of the **Model Context Protocol (MCP)** that allows AI agents to perform web searches using a **SearXNG** instance. Built with Rust for speed and reliability.
 
-Unlike standard MCP servers that communicate via `stdio`, this bridge operates over **SSE (Server-Sent Events)**, allowing it to be hosted on a remote server, NAS, or Docker container.
+Unlike standard MCP servers using `stdio`, this bridge operates over **SSE (Server-Sent Events)**, enabling remote deployments on NAS, Docker, or specialized servers.
 
 toc::[]
 
-== Why this Bridge?
+== Features
 
-Most MCP servers are limited to local execution via standard I/O. This bridge was specifically created to support:
+* **Network-Ready**: Connect via SSE/HTTP; no local child-process management required.
+* **Modern Rust**: Leveraging Edition 2024 features and the Axum/Tokio ecosystem.
+* **Docker Optimized**: Multi-stage builds for a tiny footprint (~80MB).
+* **Transparent**: Syslog-compliant logs with backend performance tracking.
 
-* **Remote Deployment**: Run the bridge on a dedicated server (NAS, VPS) while your AI client runs on your workstation.
-* **Decoupled Architecture**: No need to manage local child processes or path-specific configurations in your AI client.
-* **Concurrency**: Powered by `Axum` and `Tokio`, it provides a non-blocking, asynchronous environment for search operations.
-* **Observability**: Includes structured, Syslog-compliant logs with backend latency tracking.
+== Deployment Options
 
-== Architecture
+=== 1. Using the DockerHub Image (Fastest)
+The easiest way to run the bridge is using the official pre-built image.
 
-The bridge acts as a network middleware between the MCP Client and your SearXNG instance:
+[source,bash]
+----
+docker run -d \
+  --name mcp-searxng-bridge \
+  -p 3000:3000 \
+  -e MCP_SX_URL="http://your-searxng-ip:18080" \
+  davidburet/mcp-searxng-bridge:0.2.0
+----
 
+=== 2. Building with Docker (Local)
+If you want to build your own container from source:
 
+[source,bash]
+----
+# Build the image
+docker build -t mcp-searxng-bridge .
 
-== Installation
+# Run the local container
+docker run -d -p 3000:3000 -e MCP_SX_URL="http://172.17.0.1:18080" mcp-searxng-bridge
+----
 
-=== Prerequisites
-* Rust (latest stable)
-* A running SearXNG instance (accessible via HTTP)
+=== 3. Native Binary Build
+Requires Rust 1.85+ (for Edition 2024 support).
 
-=== Build
 [source,bash]
 ----
 cargo build --release
+export MCP_SX_URL="http://localhost:18080"
+./target/release/mcp-searxng-rs
 ----
-The binary will be located at `target/release/mcp-searxng-rs`.
 
 == Configuration
 
-Configuration is handled via environment variables (prefix `MCP_SX_`):
+Environment variables (prefixed with `MCP_SX_`):
 
 [cols="1,2,1"]
 |===
@@ -61,56 +75,37 @@ Configuration is handled via environment variables (prefix `MCP_SX_`):
 | `3000`
 
 | `MCP_SX_LOG`
-| Log level (`trace`, `debug`, `info`, `warn`, `error`)
+| Log level (`debug`, `info`, `warn`, `error`)
 | `info`
 |===
 
-== Quick Start
+== Connecting to Claude Desktop
 
-1. **Start the Bridge**:
-[source,bash]
-----
-export MCP_SX_URL="http://192.168.1.50:8080"
-export MCP_SX_LOG="info"
-./target/release/mcp-searxng-rs
-----
+Configure your `claude_desktop_config.json` to point to your bridge. Even if the bridge is remote, Claude Desktop uses the local command to initiate the network connection:
 
-2. **Setup Claude Desktop**:
-Add the following to your `claude_desktop_config.json`:
 [source,json]
 ----
 {
   "mcpServers": {
     "searxng-network": {
-      "command": "/path/to/mcp-searxng-rs",
+      "command": "mcp-searxng-rs",
       "env": {
-        "MCP_SX_URL": "http://192.168.1.50:8080"
+        "MCP_SX_URL": "http://your-remote-searxng:18080"
       }
     }
   }
 }
 ----
 
-== Project Structure
-
-The codebase is highly modular, making it a perfect template for other MCP servers:
-
-* `src/mcp.rs`: MCP Protocol structures and definitions.
-* `src/state.rs`: Shared application state and environment config.
-* `src/handlers/`: Tool-specific logic (e.g., SearXNG search logic).
-* `src/error.rs`: Centralized error handling and Axum response mapping.
-
 == Known Limitations
 
-* **Broadcast Overkill**: Uses a global broadcast channel; every connected SSE client currently receives all search results (ideal for single-user local setups).
-* **Stateless**: The bridge does not maintain search history; context is managed by the MCP client.
-* **Security**: No built-in authentication layer. Use within a trusted network or behind a VPN.
-* **Protocol Support**: Currently supports `initialize`, `tools/list`, and `tools/call`.
+* **Broadcast Channel**: Uses a global broadcast channel; every connected SSE client currently receives all search results (best for single-user local setups).
+* **Security**: No built-in authentication. Use within a trusted network or behind a VPN/Reverse Proxy.
+* **Protocol**: Currently supports `initialize`, `tools/list`, and `tools/call`.
 
 == License
 
-MIT License. See `LICENSE` for the full text. Mentioning the author in credits is required.
+MIT License. See `LICENSE` for details. **Note:** Mentioning the author in credits is required for any redistribution.
 
 ---
-Created with passion for the Rust and AI communities.
-Parts of code generated by LLM
+Created by David. Part of the pAItrimony services suite.
