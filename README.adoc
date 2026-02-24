@@ -134,5 +134,11 @@ TIP: This bridge uses a **Hybrid Initialize** response. It returns the handshake
 
 MIT License. See `LICENSE` for details. **Note:** Mentioning the author in credits is required for any redistribution.
 
+== AI assistance disclosure
+
+This project includes AI-assisted code and documentation.
+The maintainer reviews and tests changes, however the software is provided "as is" and may contain errors.
+Use at your own risk; validate in your environment before production use.
+
 ---
-Created by David. Part of the pAItrimony services suite.
+Created by DBuret. Part of the https://gitlab.com/dburet/pAItrimony[pAItrimony] services suite.
