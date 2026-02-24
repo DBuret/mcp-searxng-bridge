@@ -28,7 +28,7 @@ LABEL org.opencontainers.image.vendor="DBuret"
 LABEL org.opencontainers.image.authors="DBuret"
 
 # Liens et Documentation
-LABEL org.opencontainers.image.url="https://github.com/votre-user/mcp-searxng-rs"
+LABEL org.opencontainers.image.url="https://github.com/DBuret/mcp-searxng-rs"
 LABEL org.opencontainers.image.source="https://github.com/DBuret/mcp-searxng-bridge"
 LABEL org.opencontainers.image.documentation="https://github.com/DBuret/mcp-searxng-bridge/blob/main/README.adoc"
 
