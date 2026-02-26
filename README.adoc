@@ -1,22 +1,26 @@
 = MCP SearXNG Rust Bridge
-v0.3.0
 :description: A high-performance, network-ready MCP server bridge for SearXNG with web scraping capabilities.
 :icons: font
 :toc: macro
 :toc-title: Table of Contents
 :imagesdir: images
 :sectnums: 
+:source-highlighter: highlight.js
 
+image:https://img.shields.io/docker/v/davidburet/mcp-searxng-bridge[Version]
+image:https://img.shields.io/docker/image-size/davidburet/mcp-searxng-bridge/latest[Size]
 image:https://img.shields.io/badge/Rust-2024-orange.svg[Rust Version]
-image:https://img.shields.io/badge/Docker-davidburet-blue.svg[Docker Hub]
 image:https://img.shields.io/badge/License-MIT-blue.svg[License]
 
 [cols="2,10",frame=none]
 |===
 |image:logo-128.png[logo] 
-|An implementation of the **Model Context Protocol (MCP)** that allows AI agents to perform web searches and extract web content. Built with Rust for speed, reliability & minimal footprint.
+a|An implementation of the **Model Context Protocol (MCP)** that allows AI agents to perform web searches and extract web content. Built with Rust for speed, reliability & minimal footprint.
 
-Unlike standard MCP servers using `stdio`, this bridge operates over **SSE (Server-Sent Events)** with a **Hybrid Response** mode, making it compatible with cloud deployments and local clients like LM Studio.
+Unlike standard MCP servers using `stdio`, this bridge operates over the network:
+
+* **SSE (Server-Sent Events)** with a **Hybrid Response** mode, making it compatible with clients like LM Studio.
+* **/mpc POST**, making it compatible with clients like open WebUI.
 |===
 
 toc::[]
@@ -59,11 +63,11 @@ docker run -d \
   -e MCP_SX_URL="http://your-searxng-ip:18080" \
   -e MCP_SX_PORT="3000" 
   -e MCP_SX_LOG="info" 
-  davidburet/mcp-searxng-bridge:0.3.1
+  davidburet/mcp-searxng-bridge:0.4.0
 ----
 
 === Building with Docker (Local)
-[source,bash]
+[source,console]
 ----
 docker build -t mcp-searxng-bridge .
 docker run -d -p 3000:3000 -e MCP_SX_URL="http://172.17.0.1:18080" mcp-searxng-bridge
@@ -71,7 +75,7 @@ docker run -d -p 3000:3000 -e MCP_SX_URL="http://172.17.0.1:18080" mcp-searxng-b
 
 === Native Binary Build
 Requires Rust 1.85+ (Edition 2024).
-[source,bash]
+[source,console]
 ----
 cargo build --release
 export MCP_SX_URL="http://localhost:18080"
@@ -122,7 +126,7 @@ To integrate the bridge, edit your `mcp.json` configuration file:
 }
 ----
 
-TIP: This bridge uses a **Hybrid Initialize** response. It returns the handshake directly via HTTP POST to avoid the 60s timeout often encountered with LM Studio's SSE implementation._
+via HTTP POST to avoid the 60s timeout often encountered with LM Studio's SSE implementation._
 
 == Known Limitations
 

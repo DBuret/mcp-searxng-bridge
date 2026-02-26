@@ -34,6 +34,7 @@ async fn main() {
         // LMStudio exige le POST sur /sse pour l'initialisation
         .route("/sse", get(sse_handler).post(messages_handler))
         .route("/messages", post(messages_handler))
+         .route("/mcp", post(mcp_handler))
         .layer(TraceLayer::new_for_http())
         .with_state(state);
 
@@ -163,4 +164,60 @@ fn handle_list_tools() -> Value {
 
 fn json_error(msg: &str) -> Value {
     json!({ "isError": true, "content": [{ "type": "text", "text": msg }] })
+}
+
+
+async fn mcp_handler(
+    State(state): State<Arc<AppState>>,
+    Json(payload): Json<McpRequest>,
+) -> impl IntoResponse {
+    let method = payload.method.as_str();
+    let request_id = payload.id.clone().unwrap_or(Value::Null);
+
+    // 1. Gestion de l'initialisation
+    if method == "initialize" {
+        let result = handle_initialize();
+        let response = McpResponse { jsonrpc: "2.0".into(), id: request_id, result };
+        return Json(response).into_response();
+    }
+
+    // 2. Routage des méthodes
+    let result = match method {
+        "tools/list" => handle_list_tools(),
+        
+        "tools/call" => {
+            let tool_name = payload.params.as_ref().and_then(|p| p.get("name")?.as_str()).unwrap_or("");
+            let args = payload.params.as_ref().and_then(|p| p.get("arguments"));
+
+            let res = match tool_name {
+                "search" => {
+                    let query = args.and_then(|a| a.get("query")?.as_str()).unwrap_or("");
+                    call_searxng(&state, query).await
+                },
+                "fetch_page" => {
+                    let url = args.and_then(|a| a.get("url")?.as_str()).unwrap_or("");
+                    fetch_url(&state, url).await
+                },
+                _ => Err(crate::error::BridgeError::Api(format!("Unknown tool: {}", tool_name))),
+            };
+
+            match res {
+                Ok(t) => json!({ "content": [{ "type": "text", "text": t }] }),
+                Err(e) => json_error(&e.to_string()),
+            }
+        },
+
+        "notifications/initialized" => return StatusCode::OK.into_response(),
+
+        _ => json_error(&format!("Method {} not supported", method)),
+    };
+
+    // 3. Réponse JSON-RPC standard
+    let response = McpResponse {
+        jsonrpc: "2.0".into(),
+        id: request_id,
+        result,
+    };
+    
+    Json(response).into_response()
 }
